@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -10,6 +13,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _selectedUserRole;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +68,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: null,
+                value: _selectedUserRole,
                 decoration: InputDecoration(
                   hintText: 'Register as',
                   filled: true,
@@ -78,22 +83,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     child: Text('Guardian'),
                     value: 'Guardian',
                   ),
+                  DropdownMenuItem(
+                    child: Text('Teacher'),
+                    value: 'Teacher',
+                  ),
                 ],
                 onChanged: (value) {
-                  // Handle dropdown value change
+                  setState(() {
+                    _selectedUserRole = value;
+                  });
                 },
               ),
               SizedBox(height: 16),
               ElevatedButton(
                 child: Text('Register'),
-                onPressed: () {
-                  // Handle the register button press
-                  String email = _emailController.text;
-                  String password = _passwordController.text;
-                  String confirmPassword = _confirmPasswordController.text;
-                  String mobileNumber = _mobileNumberController.text;
-                  // Validate the input and perform registration
-                },
+                onPressed: register,
               ),
               // Add other widgets as needed
             ],
@@ -102,5 +106,106 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
     );
   }
-}
 
+  Future<void> register() async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
+    String mobileNumber = _mobileNumberController.text;
+
+    // Validate the input
+    if (email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty ||
+        mobileNumber.isEmpty ||
+        _selectedUserRole == null) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Validation Error'),
+            content: Text('Please fill in all fields.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Validation Error'),
+            content: Text('Passwords do not match.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    try {
+      // Create a user with email and password
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Save additional user data to Firebase Firestore
+      // Replace 'users' with your desired collection name
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'email': email,
+        'mobileNumber': mobileNumber,
+        'userRole': _selectedUserRole,
+      });
+
+      // Registration successful, navigate to login page
+      Navigator.pushReplacementNamed(context, '/login');
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Registration failed.';
+
+      if (e.code == 'email-already-in-use') {
+        errorMessage = 'The email address is already in use.';
+      } else if (e.code == 'weak-password') {
+        errorMessage = 'The password is too weak.';
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Registration Error'),
+            content: Text(errorMessage),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      print(e);
+    }
+  }
+}
