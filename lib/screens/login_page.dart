@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -42,72 +43,81 @@ class _LoginPageState extends State<LoginPage> {
     return ''; // Replace '' with the actual user type retrieved from Firestore
   }
 
-  void _handleLogin() async {
-    // Handle the login button press
-    String email = _emailController.text;
-    String password = _passwordController.text;
+void _handleLogin() async {
+  // Handle the login button press
+  String email = _emailController.text;
+  String password = _passwordController.text;
 
-    // Validate the input
-    if (email.isEmpty || password.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Validation Error'),
-            content: Text('Please fill in all fields.'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
+  // Validate the input
+  if (email.isEmpty || password.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Validation Error'),
+          content: Text('Please fill in all fields.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+    return;
+  }
 
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-      User? user = userCredential.user;
-      if (user != null) {
-        String userType = await getUserTypeFromFirestore(user.uid);
+    User? user = userCredential.user;
+  if (user != null) {
+    // Retrieve user data from Firestore or any other data source based on the user's email
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
 
-        if (userType == 'Parent' || userType == 'Guardian') {
+    String registeredEmail = userData['email'];
+    String registeredUserRole = userData['userRole'];
+
+      if (email == registeredEmail) {
+        if (registeredUserRole == 'Parent' || registeredUserRole == 'Guardian') {
           Navigator.pushReplacementNamed(context, '/parent');
-        } else if (userType == 'Teacher') {
+        } else if (registeredUserRole == 'Teacher') {
           Navigator.pushReplacementNamed(context, '/teacher');
         } else {
-          print('Invalid user type: $userType');
+          print('Invalid user role: $registeredUserRole');
         }
+      } else {
+        print('Email does not match the registered email.');
       }
-    } catch (e) {
-      print('Login failed: $e');
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Error'),
-            content: Text('Login failed. Please try again.'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
     }
+  } catch (e) {
+    print('Login failed: $e');
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Login failed. Please try again.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
+}
 
   void _signInWithGoogle() async {
     try {

@@ -177,7 +177,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
       });
 
       // Registration successful, navigate to login page
-      Navigator.pushReplacementNamed(context, '/login');
+        showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Success'),
+            content: Text('Registered Successfully'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                },
+              ),
+            ],
+          );
+        },
+      );
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Registration failed.';
 
