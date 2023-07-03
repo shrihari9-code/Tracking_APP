@@ -10,6 +10,16 @@ class ParentGuardianLoginPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Parent/Guardian Login'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              // Perform logout action here
+              // For example, navigate to the login screen
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -65,6 +75,16 @@ class BusLocationScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Bus Location'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              // Perform logout action here
+              // For example, navigate to the login screen
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Text('Display the bus location here'),
@@ -79,6 +99,16 @@ class ContactSchoolScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Contact School'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              // Perform logout action here
+              // For example, navigate to the login screen
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Text('Contact school information and options here'),
@@ -93,6 +123,16 @@ class ContactTeacherScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Contact Teacher'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              // Perform logout action here
+              // For example, navigate to the login screen
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Text('Contact teacher information and options here'),

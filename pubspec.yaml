@@ -40,6 +40,12 @@ dependencies:
   firebase_core: ^2.13.1
   google_maps_flutter: ^2.1.0
   cloud_firestore: ^4.8.0
+  location:
+    git:
+      url: https://github.com/781flyingdutchman/flutterlocation.git
+      ref: 'V4'
+      path: packages/location
+  permission_handler: ^8.1.4+2
 
 dev_dependencies:
   flutter_test:

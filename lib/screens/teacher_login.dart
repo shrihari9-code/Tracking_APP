@@ -14,6 +14,7 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
   GoogleMapController? _mapController;
   LatLng? _busLocation;
   Marker? _busMarker;
+  List<Marker> _stopMarkers = [];
 
   @override
   void dispose() {
@@ -66,12 +67,26 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     });
   }
 
+  void _addStop() {
+    if (_busLocation != null) {
+      setState(() {
+        // Add a new stop marker to the map
+        Marker stopMarker = Marker(
+          markerId: MarkerId('stop_${_stopMarkers.length}'),
+          position: _busLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        );
+        _stopMarkers.add(stopMarker);
+      });
+    }
+  }
+
   LatLng getUpdatedBusLocation() {
     // Replace this with your logic to retrieve the bus location
     // You can use any method or API to get the updated bus location
     // For now, I'll just simulate a random location
-    double lat = 37.7749 + Random().nextDouble() * 0.1;
-    double lng = -122.4194 + Random().nextDouble() * 0.1;
+    double lat = 15.835757  + Random().nextDouble() * 0.1;
+    double lng = 74.490902 + Random().nextDouble() * 0.1;
     return LatLng(lat, lng);
   }
 
@@ -108,16 +123,24 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
               onPressed: _turnOnLocation,
               child: Text('Turn on Location'),
             ),
+            SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _addStop,
+              child: Text('Add Stop'),
+            ),
             Expanded(
               child: GoogleMap(
                 onMapCreated: (controller) {
-                  _mapController = controller;
+                  setState(() {
+                    _mapController = controller;
+                  });
                 },
                 initialCameraPosition: CameraPosition(
-                  target: LatLng(37.7749, -122.4194),
+                  target: LatLng(15.835757, 74.490902),
                   zoom: 12,
                 ),
-                markers: _busMarker != null ? Set<Marker>.from([_busMarker!]) : Set<Marker>(),
+                markers: Set<Marker>.from([_busMarker!, ..._stopMarkers]),
+                myLocationEnabled: true, // Enable my location button on the map
               ),
             ),
           ],
