@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 class TeacherLoginPage extends StatefulWidget {
   @override
@@ -15,6 +17,8 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
   LatLng? _busLocation;
   Marker? _busMarker;
   List<Marker> _stopMarkers = [];
+  CollectionReference _busLocationCollection =
+      FirebaseFirestore.instance.collection('busLocation');
 
   @override
   void dispose() {
@@ -51,21 +55,27 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     );
   }
 
-  void _updateBusLocation() {
-    Timer.periodic(Duration(seconds: 5), (timer) {
-      // Retrieve the bus location (you can replace this with your own logic)
-      LatLng newBusLocation = getUpdatedBusLocation();
+ void _updateBusLocation() {
+  Timer.periodic(Duration(seconds: 5), (timer) async {
+    // Retrieve the bus location
+    LatLng newBusLocation = await _getUpdatedBusLocation();
 
-      setState(() {
-        // Update the bus marker on the map
-        _busLocation = newBusLocation;
-        _busMarker = Marker(
-          markerId: MarkerId('bus'),
-          position: _busLocation!,
-        );
-      });
+    setState(() {
+      // Update the bus marker on the map
+      _busLocation = newBusLocation;
+      _busMarker = Marker(
+        markerId: MarkerId('bus'),
+        position: _busLocation!,
+      );
     });
-  }
+
+    // Store the bus location in Firestore
+    _busLocationCollection.doc('bus').set({
+      'latitude': newBusLocation.latitude,
+      'longitude': newBusLocation.longitude,
+    });
+  });
+}
 
   void _addStop() {
     if (_busLocation != null) {
@@ -81,14 +91,15 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     }
   }
 
-  LatLng getUpdatedBusLocation() {
-    // Replace this with your logic to retrieve the bus location
-    // You can use any method or API to get the updated bus location
-    // For now, I'll just simulate a random location
-    double lat = 15.835757  + Random().nextDouble() * 0.1;
-    double lng = 74.490902 + Random().nextDouble() * 0.1;
-    return LatLng(lat, lng);
-  }
+Future<LatLng> _getUpdatedBusLocation() async {
+  Position position = await Geolocator.getCurrentPosition(
+    desiredAccuracy: LocationAccuracy.best,
+  );
+
+  double lat = position.latitude;
+  double lng = position.longitude;
+  return LatLng(lat, lng);
+}
 
   @override
   void initState() {
@@ -136,10 +147,11 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
                   });
                 },
                 initialCameraPosition: CameraPosition(
+                  
                   target: LatLng(15.835757, 74.490902),
                   zoom: 12,
                 ),
-                markers: Set<Marker>.from([_busMarker!, ..._stopMarkers]),
+                markers: Set<Marker>.from(_busMarker != null ? [_busMarker!, ..._stopMarkers] : _stopMarkers),
                 myLocationEnabled: true, // Enable my location button on the map
               ),
             ),

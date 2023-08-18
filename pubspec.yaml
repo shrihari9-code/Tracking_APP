@@ -46,6 +46,8 @@ dependencies:
       ref: 'V4'
       path: packages/location
   permission_handler: ^8.1.4+2
+  geolocator: ^8.0.0
+
 
 dev_dependencies:
   flutter_test:
